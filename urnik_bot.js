@@ -124,7 +124,7 @@ bot.on("message", function(message) {
 
 bot.on('ready', function() {
 	console.log('Uroš ready!'); // bot initialization complete
-	bot.user.setActivity("Analiza"); // TODO: set to whatever is currently going on
+	//bot.user.setActivity("Analiza"); // TODO: set to whatever is currently going on
 });
 
 console.log("Uroš is waking up ...");
@@ -142,7 +142,9 @@ var weekday_7am = new schedule.RecurrenceRule();
 weekday_7am.dayOfWeek = [new schedule.Range(1, 5)]; // days are enumerated 0-6, starting with Sunday
 weekday_7am.hour = 7;
 weekday_7am.minute = 30; // default is null! removing this will cause the job to run every minute
-schedule.scheduleJob(weekday_7am, () => { // run every day at 7 AM
+schedule.scheduleJob(weekday_7am, ()=>{dailySchedule()}); // run every day at 7 AM
+
+function dailySchedule() {
 	const channel = bot.channels.get(TESTING_CHANNEL);
 	var now = new Date();
 	var dan = (now.getDay()+6) % 7; // 0 should be Monday, not Sunday
@@ -170,7 +172,7 @@ schedule.scheduleJob(weekday_7am, () => { // run every day at 7 AM
 	}
 	channel.send(message)
 		.catch((e)=>{console.log(e)})
-});
+}
 
 function getUniqueLectures(urnik) {
 	lectures = [];

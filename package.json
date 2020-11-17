@@ -1,8 +1,8 @@
 {
-  "name": "hangman_bot",
+  "name": "Uros",
   "version": "1.0.0",
-  "description": "A discord bot to play Hangman",
-  "main": "hangboi.js",
+  "description": "A discord bot to send a daily schedule with zoom links and notify of submission deadlines",
+  "main": "urnik_bot.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

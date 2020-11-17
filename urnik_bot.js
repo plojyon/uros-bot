@@ -19,6 +19,9 @@ if (!NOTIFICATION_CHANNEL) console.log("Missing NOTIFICATION_CHANNEL");
 WARNING_CHANNEL = process.env["WARNING_CHANNEL"];
 if (!WARNING_CHANNEL) console.log("Missing WARNING_CHANNEL");
 
+API_URL = process.env["API_URL"];
+if (!API_URL) console.log("Missing API_URL");
+
 // currently, preferences cannot load because Heroku does not support persistent storage
 // TODO: find a remote database solution instead
 /*
@@ -35,27 +38,32 @@ fs.readFile("./preferences.json", function(err, data) {
 
 urnik = {};
 function get_urnik() {
-	let url = "https://fmf-fri-timetable-scraper.herokuapp.com/";
+	let url = API_URL;
 	fetch(url, { method: "GET" })
 		.then(res => res.json())
 		.then((json) => {
 			urnik = json;
 			console.log("Got urnik. Length: "+urnik.length);
-			urnik_unique = [];
+			urnik_unique = {};
 			lectures = getUniqueLectures(urnik);
 			for (i in lectures) {
+				// grab all occurrences a lecture
 				lect = urnik.filter((ura)=>{return ura.predmet.abbr+"-"+ura.tip == lectures[i]});
-				urnik_unique[lectures[i]] = {...lect[0]}; // clone object
+				// clone the first occurrence, then we will replace
+				// the ura field with an array of times and professors
+				urnik_unique[lectures[i]] = {...lect[0]};
 				delete urnik_unique[lectures[i]].profesor;
 				urnik_unique[lectures[i]].ura = []; // ura is now array of occurrences
+				// assemble array of occurrences
 				for (l in lect) {
 					time = lect[l].ura;
 					prof = lect[l].profesor;
 					urnik_unique[lectures[i]].ura.push(time+":15 ("+prof+")");
+					// ura: [ '8:15 (Nikolaj Zimic)', '10:15 (Nikolaj Zimic)' ],
 				}
 				// sort occurrences by time
 				urnik_unique[lectures[i]].ura.sort((a,b)=>{
-					aa=parseInt(a.split(":")[0]);
+					aa=parseInt(a.split(":")[0]); // only the hour should vary anyway
 					bb=parseInt(b.split(":")[0]);
 					if (aa < bb) return -1;
 					if (aa > bb) return 1;
@@ -71,7 +79,8 @@ function get_urnik() {
 
 function warn(txt) {
 	const channel = bot.channels.get(WARNING_CHANNEL);
-	channel.send(txt);
+	channel.send(txt)
+		.catch((e)=>{console.log(e)})
 }
 
 // TODO:
@@ -91,19 +100,22 @@ bot.on("message", function(message) {
 	// and send the output back to the same channel
 	if (message.author.id === "356393895216545803" && msg.indexOf("%") === 0) {
 		try {
-			message.channel.send("```"+eval(message.content.substring(1))+"```");
+			message.channel.send("```"+eval(message.content.substring(1))+"```")
+				.catch((e)=>{console.log(e)})
 			return;
 		}
 		catch(e) {
-			message.channel.send("```"+e+"```");
+			message.channel.send("```"+e+"```")
+				.catch((e)=>{console.log(e)})
 			return;
 		}
 	}
 
-	// %preferences["bot_role"] = message.mentions.roles.first() // @urnik
 	if (message.guild !== null && message.isMentioned(bot.user)) {
-		message.react("🥳");
-		message.channel.send("I heard my name!");
+		message.react("🥳")
+			.catch((e)=>{console.log(e)})
+		message.channel.send("I heard my name!")
+			.catch((e)=>{console.log(e)})
 		//message.author.send(help);
 		return;
 	}
@@ -112,7 +124,7 @@ bot.on("message", function(message) {
 
 bot.on('ready', function() {
 	console.log('Uroš ready!'); // bot initialization complete
-	//bot.user.setActivity("Analiza"); // TODO: set to whatever is currently going on
+	bot.user.setActivity("Analiza"); // TODO: set to whatever is currently going on
 });
 
 console.log("Uroš is waking up ...");
@@ -134,9 +146,16 @@ schedule.scheduleJob(weekday_7am, () => { // run every day at 7 AM
 	const channel = bot.channels.get(TESTING_CHANNEL);
 	var now = new Date();
 	var dan = (now.getDay()+6) % 7; // 0 should be Monday, not Sunday
-	urnik_today = urnik.filter((ura) => {
+	/*urnik_today = urnik.filter((ura) => {
 		return ura["dan"] == dan;
-	});
+	});*/
+	var now = new Date();
+	var today = (now.getDay()+6) % 7; // 0 should be Monday, not Sunday
+	urnik_today = {};
+	for (u in urnik) {
+		if (urnik[u].dan == today.toString())
+			urnik_today[u] = urnik[u];
+	}
 
 	message = "Dobro jutro! Tu je današnji urnik:";
 	for (u in urnik_today) {
@@ -144,12 +163,13 @@ schedule.scheduleJob(weekday_7am, () => { // run every day at 7 AM
 		message += "\n\n`"+urnik_today[u].predmet.name+"` - "+type+" ob ";
 		message += urnik_today[u].ura.join(", ");
 		message += "\nLink: ";
-		if (urnik_today[u].link.indexOf("http") != -1)
+		if (urnik_today[u].link.indexOf("http") == 0)
 			message += "<"+urnik_today[u].link+">";
 		else
 			message += urnik_today[u].link
 	}
-	channel.send(message);
+	channel.send(message)
+		.catch((e)=>{console.log(e)})
 });
 
 function getUniqueLectures(urnik) {

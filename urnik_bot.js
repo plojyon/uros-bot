@@ -145,7 +145,7 @@ weekday_7am.minute = 30; // default is null! removing this will cause the job to
 schedule.scheduleJob(weekday_7am, ()=>{dailySchedule()}); // run every day at 7 AM
 
 function dailySchedule() {
-	const channel = bot.channels.get(TESTING_CHANNEL);
+	const channel = bot.channels.get(NOTIFICATION_CHANNEL);
 	var now = new Date();
 	var dan = (now.getDay()+6) % 7; // 0 should be Monday, not Sunday
 	/*urnik_today = urnik.filter((ura) => {

@@ -138,11 +138,19 @@ urnik = get_urnik();
 // notify deadlines even on weekends, so make a new schedule!
 
 // send a daily digest every weekday at 7 am
-var weekday_7am = new schedule.RecurrenceRule();
-weekday_7am.dayOfWeek = [new schedule.Range(1, 5)]; // days are enumerated 0-6, starting with Sunday
-weekday_7am.hour = 7;
-weekday_7am.minute = 30; // default is null! removing this will cause the job to run every minute
-schedule.scheduleJob(weekday_7am, ()=>{dailySchedule()}); // run every day at 7 AM
+//var weekday_7am = new schedule.RecurrenceRule();
+//weekday_7am.dayOfWeek = [new schedule.Range(1, 5)]; // days are enumerated 0-6, starting with Sunday
+//weekday_7am.hour = 7;
+//weekday_7am.minute = 30; // default is null! removing this will cause the job to run every minute
+//schedule.scheduleJob(weekday_7am, ()=>{dailySchedule()}); // run every day at 7 AM
+const CronJob = require('cron');
+const dailyScheduleJob = new CronJob.CronJob (
+	'03 9 * * 1-5', // “At 07:30 every weekday” https://crontab.guru/
+	dailySchedule,
+	null, //oncomplete
+	false //start flag
+);
+dailyScheduleJob.start()
 
 function dailySchedule() {
 	const channel = bot.channels.get(NOTIFICATION_CHANNEL);

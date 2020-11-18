@@ -108,7 +108,7 @@ bot.on("message", function(message) {
 	// and send the output back to the same channel
 	if (message.author.id === "356393895216545803" && msg.indexOf("%") === 0) {
 		try {
-			if message.indexOf("```" == -1) {
+			if (message.indexOf("```" == -1)) {
 				message.channel.send("```"+eval(message.content.substring(1))+"```")
 					.catch((e)=>{console.log(e)})
 			}
@@ -158,7 +158,7 @@ urnik = get_urnik();
 //schedule.scheduleJob(weekday_7am, ()=>{dailySchedule()}); // run every day at 7 AM
 const CronJob = require('cron');
 const dailyScheduleJob = new CronJob.CronJob (
-	'33 9 * * 1-5', // “At 07:30 every weekday” https://crontab.guru/
+	'47 9 * * 1-5', // “At 07:30 every weekday” https://crontab.guru/
 	dailySchedule,
 	null, //oncomplete
 	false //start flag

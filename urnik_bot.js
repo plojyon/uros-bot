@@ -108,12 +108,12 @@ bot.on("message", function(message) {
 	// and send the output back to the same channel
 	if (message.author.id === "356393895216545803" && msg.indexOf("%") === 0) {
 		try {
-			if (message.indexOf("```" == -1)) {
+			if (message.content.indexOf("```" != 0)) {
 				message.channel.send("```"+eval(message.content.substring(1))+"```")
 					.catch((e)=>{console.log(e)})
 			}
 			else {
-				eval(message.content.slice(4,-3)); // do not send anything back
+				console.log(eval(message.content.slice(4,-3))); // do not send anything back
 			}
 			return;
 		}

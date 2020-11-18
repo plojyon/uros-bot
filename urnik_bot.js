@@ -42,35 +42,43 @@ function get_urnik() {
 	fetch(url, { method: "GET" })
 		.then(res => res.json())
 		.then((json) => {
-			urnik = json;
-			console.log("Got urnik. Length: "+urnik.length);
-			urnik_unique = {};
-			lectures = getUniqueLectures(urnik);
-			for (i in lectures) {
-				// grab all occurrences a lecture
-				lect = urnik.filter((ura)=>{return ura.predmet.abbr+"-"+ura.tip == lectures[i]});
-				// clone the first occurrence, then we will replace
-				// the ura field with an array of times and professors
-				urnik_unique[lectures[i]] = {...lect[0]};
-				delete urnik_unique[lectures[i]].profesor;
-				urnik_unique[lectures[i]].ura = []; // ura is now array of occurrences
-				// assemble array of occurrences
-				for (l in lect) {
-					time = lect[l].ura;
-					prof = lect[l].profesor;
-					urnik_unique[lectures[i]].ura.push(time+":15 ("+prof+")");
-					// ura: [ '8:15 (Nikolaj Zimic)', '10:15 (Nikolaj Zimic)' ],
-				}
-				// sort occurrences by time
-				urnik_unique[lectures[i]].ura.sort((a,b)=>{
-					aa=parseInt(a.split(":")[0]); // only the hour should vary anyway
-					bb=parseInt(b.split(":")[0]);
-					if (aa < bb) return -1;
-					if (aa > bb) return 1;
-					return 0;
-				});
+			//urnik = json;
+			console.log("Got urnik. Lecture count: "+json.length);
+			urnik = [];
+			for (u in json) {
+				if (!(json[u].dan in urnik)) urnik[json[u].dan] = [];
+				urnik[json[u].dan].push(json[u]);
 			}
-			urnik = urnik_unique;
+			console.log("Day count: "+urnik.length);
+			for (dan in urnik) {
+				urnik_unique = {};
+				lectures = getUniqueLectures(urnik[dan]);
+				for (i in lectures) {
+					// grab all occurrences a lecture
+					lect = urnik[dan].filter((ura)=>{return ura.predmet.abbr+"-"+ura.tip == lectures[i]});
+					// clone the first occurrence, then we will replace
+					// the ura field with an array of times and professors
+					urnik_unique[lectures[i]] = {...lect[0]};
+					delete urnik_unique[lectures[i]].profesor;
+					urnik_unique[lectures[i]].ura = []; // ura is now array of occurrences
+					// assemble array of occurrences
+					for (l in lect) {
+						time = lect[l].ura;
+						prof = lect[l].profesor;
+						urnik_unique[lectures[i]].ura.push(time+":15 ("+prof+")");
+						// ura: [ '8:15 (Nikolaj Zimic)', '10:15 (Nikolaj Zimic)' ],
+					}
+					// sort occurrences by time
+					urnik_unique[lectures[i]].ura.sort((a,b)=>{
+						aa=parseInt(a.split(":")[0]); // only the hour should vary anyway
+						bb=parseInt(b.split(":")[0]);
+						if (aa < bb) return -1;
+						if (aa > bb) return 1;
+						return 0;
+					});
+				}
+				urnik[dan] = urnik_unique;
+			}
 			console.log("urnik after uniquisation:");
 			console.log(urnik);
 		});
@@ -145,7 +153,7 @@ urnik = get_urnik();
 //schedule.scheduleJob(weekday_7am, ()=>{dailySchedule()}); // run every day at 7 AM
 const CronJob = require('cron');
 const dailyScheduleJob = new CronJob.CronJob (
-	'03 9 * * 1-5', // “At 07:30 every weekday” https://crontab.guru/
+	'30 9 * * 1-5', // “At 07:30 every weekday” https://crontab.guru/
 	dailySchedule,
 	null, //oncomplete
 	false //start flag
@@ -155,28 +163,18 @@ dailyScheduleJob.start()
 function dailySchedule() {
 	const channel = bot.channels.get(NOTIFICATION_CHANNEL);
 	var now = new Date();
-	var dan = (now.getDay()+6) % 7; // 0 should be Monday, not Sunday
-	/*urnik_today = urnik.filter((ura) => {
-		return ura["dan"] == dan;
-	});*/
-	var now = new Date();
 	var today = (now.getDay()+6) % 7; // 0 should be Monday, not Sunday
-	urnik_today = {};
-	for (u in urnik) {
-		if (urnik[u].dan == today.toString())
-			urnik_today[u] = urnik[u];
-	}
 
 	message = "Dobro jutro! Tu je današnji urnik:";
-	for (u in urnik_today) {
-		type = (urnik_today[u].tip.indexOf("V") != -1)? "vaje" : "predavanja";
-		message += "\n\n`"+urnik_today[u].predmet.name+"` - "+type+" ob ";
-		message += urnik_today[u].ura.join(", ");
+	for (u in urnik[today]) {
+		type = (urnik[today][u].tip.indexOf("V") != -1)? "vaje" : "predavanja";
+		message += "\n\n`"+urnik[today][u].predmet.name+" - "+type+"` ob ";
+		message += urnik[today][u].ura.join(", ");
 		message += "\nLink: ";
-		if (urnik_today[u].link.indexOf("http") == 0)
-			message += "<"+urnik_today[u].link+">";
+		if (urnik[today][u].link.indexOf("http") == 0)
+			message += "<"+urnik[today][u].link+">"; // disable link preview
 		else
-			message += urnik_today[u].link
+			message += urnik[today][u].link
 	}
 	channel.send(message)
 		.catch((e)=>{console.log(e)})

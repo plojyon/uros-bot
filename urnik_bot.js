@@ -153,7 +153,7 @@ urnik = get_urnik();
 //schedule.scheduleJob(weekday_7am, ()=>{dailySchedule()}); // run every day at 7 AM
 const CronJob = require('cron');
 const dailyScheduleJob = new CronJob.CronJob (
-	'30 9 * * 1-5', // “At 07:30 every weekday” https://crontab.guru/
+	'33 9 * * 1-5', // “At 07:30 every weekday” https://crontab.guru/
 	dailySchedule,
 	null, //oncomplete
 	false //start flag

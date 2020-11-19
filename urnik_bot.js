@@ -37,91 +37,97 @@ fs.readFile("./preferences.json", function(err, data) {
 });
 */
 
-urnik = {};
+urnik = [];
 function get_urnik() {
-	let url = API_URL;
-	fetch(url, { method: "GET" })
-		.then(res => res.json())
-		.then((json) => {
-			//urnik = json;
-			console.log("Got urnik. Lecture count: "+json.length);
-			urnik = [];
-			for (u in json) {
-				if (!(json[u].dan in urnik)) urnik[json[u].dan] = [];
-				urnik[json[u].dan].push(json[u]);
-			}
-			console.log("Day count: "+urnik.length);
-			for (dan in urnik) {
-				urnik_unique = {};
-				lectures = getUniqueLectures(urnik[dan]);
-				for (i in lectures) {
-					// grab all occurrences a lecture
-					lect = urnik[dan].filter((ura)=>{return ura.predmet.abbr+"-"+ura.tip == lectures[i]});
-					// clone the first occurrence, then we will replace
-					// the ura field with an array of times and professors
-					urnik_unique[lectures[i]] = {...lect[0]};
-					delete urnik_unique[lectures[i]].profesor;
-					urnik_unique[lectures[i]].ura = []; // ura is now array of occurrences
-					// assemble array of occurrences
-					for (l in lect) {
-						time = lect[l].ura;
-						prof = lect[l].profesor;
-						urnik_unique[lectures[i]].ura.push(time+":15 ("+prof+")");
-						// ura: [ '8:15 (Nikolaj Zimic)', '10:15 (Nikolaj Zimic)' ],
-					}
-					// sort occurrences by time
-					urnik_unique[lectures[i]].ura.sort((a,b)=>{
-						aa=parseInt(a.split(":")[0]); // only the hour should vary anyway
-						bb=parseInt(b.split(":")[0]);
-						if (aa < bb) return -1;
-						if (aa > bb) return 1;
-						return 0;
-					});
+	fetch(URNIK_API_URL, { method: "GET" })
+	.then(res => res.json())
+	.then((json) => {
+		console.log("Got urnik. Lecture count: "+json.length);
+		// split the array of classes into an array of days;
+		// urnik[0] is an array of classes on Monday, etc.
+		for (u in json) {
+			if (!(json[u].dan in urnik)) urnik[json[u].dan] = [];
+			urnik[json[u].dan].push(json[u]);
+		}
+		console.log("Day count: "+urnik.length);
+		// for each day, group the duplicate classes together
+		for (dan in urnik) {
+			urnik_unique = {};
+			lectures = getUniqueLectures(urnik[dan]);
+			for (i in lectures) {
+				// grab all occurrences a lecture
+				lect = urnik[dan].filter((ura)=>{return ura.predmet.abbr+"-"+ura.tip == lectures[i]});
+				// clone the first occurrence, then we will replace
+				// the ura field with an array of times and professors
+				urnik_unique[lectures[i]] = {...lect[0]};
+				delete urnik_unique[lectures[i]].profesor;
+				urnik_unique[lectures[i]].ura = []; // ura is now array of occurrences
+				// assemble array of occurrences
+				for (l in lect) {
+					time = lect[l].ura;
+					prof = lect[l].profesor;
+					urnik_unique[lectures[i]].ura.push(time+":15 ("+prof+")");
+					// ura: [ '8:15 (Nikolaj Zimic)', '10:15 (Nikolaj Zimic)' ],
 				}
-				urnik[dan] = urnik_unique;
+				// sort occurrences by time
+				urnik_unique[lectures[i]].ura.sort((a,b)=>{
+					aa=parseInt(a.split(":")[0]); // only the hour should vary anyway
+					bb=parseInt(b.split(":")[0]);
+					if (aa < bb) return -1;
+					if (aa > bb) return 1;
+					return 0;
+				});
 			}
-			console.log("urnik after uniquisation:");
-			console.log(urnik);
-		});
+			urnik[dan] = urnik_unique;
+		}
+		console.log("urnik after uniquisation:");
+		console.log(urnik);
+	});
 }
 
-
-function warn(txt) {
-	const channel = bot.channels.get(WARNING_CHANNEL);
-	channel.send(txt)
-		.catch((e)=>{console.log(e)})
-}
 
 // TODO:
 help = "help text goes here";
 
 
 bot.on("message", function(message) {
-	var msg = message.content.toLowerCase(); // case insensitive
-
-	user = message.author.id;
-	channel = message.channel.id;
-
-	if (message.author.bot) return;
+	//if (message.author.bot) return;
 
 	// DEBUG:
 	// if the message is from me and starts with %, eval() the message
-	// and send the output back to the same channel
-	if (message.author.id === "356393895216545803" && msg.indexOf("%") === 0) {
+	// and send the output back to the same channel, unless
+	// the message was in a ```code block```, in which case console.log the output
+	if (message.author.id === "356393895216545803" && message.content.indexOf("%") === 0) {
 		try {
 			if (message.content.indexOf("```" != 0)) {
+				// not in a code block
 				message.channel.send("```"+eval(message.content.substring(1))+"```")
 					.catch((e)=>{console.log(e)})
 			}
 			else {
+				// in a code block
 				console.log(eval(message.content.slice(4,-3))); // do not send anything back
 			}
 			return;
 		}
 		catch(e) {
+			// in case of errors, always report to the channel
 			message.channel.send("```"+e+"```")
 				.catch((e)=>{console.log(e)})
 			return;
+		}
+	}
+
+	// any bot can wake up Uroš, not only cron.js. This is intended behaviour.
+	if (message.author.bot && message.content == "sudo wake up") {
+		if (today() < 6) { // is weekday
+			dailySchedule();
+			dailyMentions();
+			dailyDeadlines();
+		}
+		else {
+			dailyMentions();
+			dailyDeadlines();
 		}
 	}
 
@@ -148,32 +154,21 @@ bot.login(process.env["CLIENT_SECRET"]).then(() => {
 
 urnik = get_urnik();
 
-// TODO: check for moodle posts daily (or bidaily) and notify of deadlines
-// notify deadlines even on weekends, so make a new schedule!
-
-// send a daily digest every weekday at 7 am
-//var weekday_7am = new schedule.RecurrenceRule();
-//weekday_7am.dayOfWeek = [new schedule.Range(1, 5)]; // days are enumerated 0-6, starting with Sunday
-//weekday_7am.hour = 7;
-//weekday_7am.minute = 30; // default is null! removing this will cause the job to run every minute
-//schedule.scheduleJob(weekday_7am, ()=>{dailySchedule()}); // run every day at 7 AM
-const CronJob = require('cron');
-const dailyScheduleJob = new CronJob.CronJob (
-	'47 9 * * 1-5', // “At 07:30 every weekday” https://crontab.guru/
-	dailySchedule,
-	null, //oncomplete
-	false //start flag
-);
-dailyScheduleJob.start()
+function today() {
+	let now = new Date();
+	return (now.getDay()+6) % 7; // 0 should be Monday, not Sunday
+}
 
 function dailySchedule() {
 	const channel = bot.channels.get(NOTIFICATION_CHANNEL);
-	var now = new Date();
-	var today = (now.getDay()+6) % 7; // 0 should be Monday, not Sunday
+	now = new Date();
+	const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+	let date = now.toLocaleDateString("sl-SI", options);
+	let today = today();
 
-	message = "Dobro jutro! Tu je današnji urnik:";
+	var message = "Dobro jutro! Danes je "+date+".\nTu je današnji urnik:";
 	for (u in urnik[today]) {
-		type = (urnik[today][u].tip.indexOf("V") != -1)? "vaje" : "predavanja";
+		let type = (urnik[today][u].tip.indexOf("V") != -1)? "vaje" : "predavanja";
 		message += "\n\n`"+urnik[today][u].predmet.name+" - "+type+"` ob ";
 		message += urnik[today][u].ura.join(", ");
 		message += "\nLink: ";
@@ -186,8 +181,16 @@ function dailySchedule() {
 		.catch((e)=>{console.log(e)})
 }
 
+function dailyDeadlines() {
+	// TODO: which deadlines are today?
+}
+
+function dailyMentions() {
+	// TODO: which forum posts mention today?
+}
+
 function getUniqueLectures(urnik) {
-	lectures = [];
+	let lectures = [];
 	for (i in urnik) {
 		if (!(urnik[i].predmet.abbr in lectures)) {
 			lectures.push(urnik[i].predmet.abbr+"-"+urnik[i].tip);

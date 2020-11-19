@@ -39,7 +39,7 @@ fs.readFile("./preferences.json", function(err, data) {
 
 urnik = {};
 function get_urnik() {
-	let url = API_URL;
+	let url = URNIK_API_URL;
 	fetch(url, { method: "GET" })
 		.then(res => res.json())
 		.then((json) => {

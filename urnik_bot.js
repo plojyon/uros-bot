@@ -1,6 +1,7 @@
-/**************************
- * DISCORD TIMETABLE BOT  *
- * ************************/
+/***************************
+ *          UROŠ           *
+ *  DISCORD TIMETABLE BOT  *
+ ***************************/
 // Invite link:
 // https://discord.com/api/oauth2/authorize?client_id=770964922720321546&permissions=8&scope=bot
 
@@ -16,11 +17,11 @@ TESTING_CHANNEL = process.env["TESTING_CHANNEL"];
 if (!TESTING_CHANNEL) console.log("Missing TESTING_CHANNEL");
 NOTIFICATION_CHANNEL = process.env["NOTIFICATION_CHANNEL"];
 if (!NOTIFICATION_CHANNEL) console.log("Missing NOTIFICATION_CHANNEL");
-WARNING_CHANNEL = process.env["WARNING_CHANNEL"];
-if (!WARNING_CHANNEL) console.log("Missing WARNING_CHANNEL");
 
-API_URL = process.env["API_URL"];
-if (!API_URL) console.log("Missing API_URL");
+URNIK_API_URL = process.env["URNIK_API_URL"];
+if (!URNIK_API_URL) console.log("Missing URNIK_API_URL");
+MOODLE_API_URL = process.env["URNIK_API_URL"];
+if (!MOODLE_API_URL) console.log("Missing MOODLE_API_URL");
 
 // currently, preferences cannot load because Heroku does not support persistent storage
 // TODO: find a remote database solution instead

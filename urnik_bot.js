@@ -20,8 +20,10 @@ if (!NOTIFICATION_CHANNEL) console.log("Missing NOTIFICATION_CHANNEL");
 
 URNIK_API_URL = process.env["URNIK_API_URL"];
 if (!URNIK_API_URL) console.log("Missing URNIK_API_URL");
-MOODLE_API_URL = process.env["URNIK_API_URL"];
+MOODLE_API_URL = process.env["MOODLE_API_URL"];
 if (!MOODLE_API_URL) console.log("Missing MOODLE_API_URL");
+AVATAR_URL = process.env["AVATAR_URL"];
+if (!AVATAR_URL) console.log("Missing AVATAR_URL");
 
 // currently, preferences cannot load because Heroku does not support persistent storage
 // TODO: find a remote database solution instead
@@ -109,12 +111,14 @@ bot.on("message", function(message) {
 	// and send the output back to the same channel
 	if (message.author.id === "356393895216545803" && msg.indexOf("%") === 0) {
 		try {
-			if (message.content.indexOf("```" != 0)) {
+			// if the message is in ```code blocks```, supress the return value
+			if (message.content.indexOf("```") != 1) {
 				message.channel.send("```"+eval(message.content.substring(1))+"```")
 					.catch((e)=>{console.log(e)})
 			}
 			else {
-				console.log(eval(message.content.slice(4,-3))); // do not send anything back
+				// log the return value to the console instead
+				console.log(eval(message.content.slice(4,-3)));
 			}
 			return;
 		}
@@ -161,16 +165,30 @@ const CronJob = require('cron');
 const dailyScheduleJob = new CronJob.CronJob (
 	'00 6 * * 1-5', // “At 07:00 every weekday” https://crontab.guru/
 	// this is set to 6:00 because of the default timezone at heroku
-	dailySchedule,
+	()=>{
+		if (getToday() < 6) { // is weekday
+			dailySchedule();
+			dailyMentions();
+			dailyDeadlines();
+		}
+		else {
+			dailyMentions();
+			dailyDeadlines();
+		}
+	},
 	null, //oncomplete
 	false //start flag
 );
 dailyScheduleJob.start()
 
+function getToday() {
+	return (new Date().getDay()+6) % 7; // 0 should be Monday, not Sunday
+}
+
 function dailySchedule() {
 	const channel = bot.channels.get(NOTIFICATION_CHANNEL);
 	var now = new Date();
-	var today = (now.getDay()+6) % 7; // 0 should be Monday, not Sunday
+	var today = getToday();
 
 	message = "Dobro jutro! Tu je današnji urnik:";
 	for (u in urnik[today]) {
@@ -181,10 +199,107 @@ function dailySchedule() {
 		if (urnik[today][u].link.indexOf("http") == 0)
 			message += "<"+urnik[today][u].link+">"; // disable link preview
 		else
-			message += urnik[today][u].link
+			message += urnik[today][u].link;
 	}
 	channel.send(message)
-		.catch((e)=>{console.log(e)})
+		.catch((e)=>{console.log(e)});
+
+	return "Daily schedule sent to "+NOTIFICATION_CHANNEL;
+}
+
+function dailyMentions() {
+	// TODO: "today was mentioned in the following posts:"
+	return "Fetching mentions now. This might take a minute ...";
+}
+
+function dailyDeadlines() {
+	// ":alarm: Ne pozabi! Danes je rok za (quiz/assignment)!"
+	fetch(MOODLE_API_URL+"/getQuizzes?location=fri&deadlines=true", { method: "GET" })
+	.then(res => res.json())
+	.then((fri_quizzes) => {
+		fetch(MOODLE_API_URL+"/getQuizzes?location=fmf&deadlines=true", { method: "GET" })
+		.then(res => res.json())
+		.then((fmf_quizzes) => {
+			fetch(MOODLE_API_URL+"/getAssignments?location=fri&deadlines=true", { method: "GET" })
+			.then(res => res.json())
+			.then((fri_assignments) => {
+				fetch(MOODLE_API_URL+"/getAssignments?location=fmf&deadlines=true", { method: "GET" })
+				.then(res => res.json())
+				.then((fmf_assignments) => {
+					console.log("Got FRI quiz deadlines:");
+					console.log(fri_quizzes);
+					console.log("Got FMF quiz deadlines:");
+					console.log(fmf_quizzes);
+					console.log("Got FRI ass deadlines:");
+					console.log(fri_assignments);
+					console.log("Got FMF ass deadlines:");
+					console.log(fmf_assignments);
+
+					var message = {
+						color: 0xFF0000,
+						title: '🚨 POZOR! 🚨',
+						description: 'Danes je rok za oddajo:',
+						fields: [
+							//{
+								//name: '➡️ LINALG',
+								//value: '1. DN Naloga',
+							//},
+						],
+						timestamp: new Date(),
+						footer: {
+							text: 'Za vaše ocene poskrbi Uroš',
+							icon_url: AVATAR_URL,
+						},
+					};
+
+					var quizzes = Object.assign(fri_quizzes, fmf_quizzes);
+					var assignments = Object.assign(fri_assignments, fmf_assignments);
+					for (abbr in quizzes) {
+						for (dline in quizzes[abbr]) {
+							if (isTimestampToday(quizzes[abbr][dline].timestamps.close)) {
+								message.fields.push({
+										"name": "➡️ "+abbr,
+										"value": quizzes[abbr][dline].title
+								});
+								console.log("DEADINE TODAY: ["+abbr+"] "+quizzes[abbr][dline].title);
+							}
+						}
+					}
+					for (abbr in assignments) {
+						for (dline in assignments[abbr]) {
+							if (isTimestampToday(assignments[abbr][dline].timestamps.due)) {
+								message.fields.push({
+										"name": "➡️ "+abbr,
+										"value": assignments[abbr][dline].title
+								});
+								console.log("DEADINE TODAY: ["+abbr+"] "+assignments[abbr][dline].title);
+							}
+						}
+					}
+
+					if (message.fields.length > 0) {
+						const channel = bot.channels.get(NOTIFICATION_CHANNEL);
+						channel.send({ embed: message })
+							.catch((e)=>{console.log(e)});
+					}
+					else {
+						console.log("No deadlines today. Lp");
+					}
+				});
+			});
+		});
+	});
+	return "Fetchign deadlines now. This might take a minute ...";
+}
+function isTimestampToday(time) {
+	if (!time) return;
+	time *= 1000; // js deals in milliseconds
+	var today = new Date().setHours(0, 0, 0, 0);
+	var ts_day = new Date(time).setHours(0, 0, 0, 0);
+	if (today === ts_day){
+		return true;
+	}
+	return false;
 }
 
 function getUniqueLectures(urnik) {

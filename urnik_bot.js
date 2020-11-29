@@ -164,7 +164,9 @@ urnik = get_urnik();
 const CronJob = require('cron');
 const dailyScheduleJob = new CronJob.CronJob (
 	'00 6 * * 1-5', // “At 07:00 every weekday” https://crontab.guru/
-	// this is set to 6:00 because of the default timezone at heroku
+	// this is set to 6:00 because the default timezone at heroku is UTC,
+	// meanwhile we live in GMT+1
+	// P.S. fuck timezones
 	()=>{
 		if (getToday() < 6) { // is weekday
 			dailySchedule();
@@ -183,6 +185,19 @@ dailyScheduleJob.start()
 
 function getToday() {
 	return (new Date().getDay()+6) % 7; // 0 should be Monday, not Sunday
+}
+
+
+// returns timestamp, translated to GMT+1
+function gmt_plus_one(timestamp) {
+	// if I had to choose a religion, I'd go for polytheism
+	// just so I could pray to hundreds of different gods
+	// that I never ever have to deal with timezones again.
+	return timestamp
+		- 60000*(new Date().getTimezoneOffset()) // translate to UTC
+		+ 60*1000*60; // add one hour
+	// the absolute insanity of dealing with timezones is
+	// something I wouldn't wish upon my worst enemies.
 }
 
 function dailySchedule() {
@@ -296,6 +311,7 @@ function dailyDeadlines() {
 function isTimestampToday(time) {
 	if (!time) return;
 	time *= 1000; // js deals in milliseconds
+	time = gmt_plus_one(time);
 	var today = new Date().setHours(0, 0, 0, 0);
 	var ts_day = new Date(time).setHours(0, 0, 0, 0);
 	if (today === ts_day){

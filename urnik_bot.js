@@ -188,7 +188,9 @@ function getToday() {
 }
 
 
-// returns timestamp, translated to GMT+1
+// returns timestamp, translated to (from?) GMT+1
+// (??) basically, use this on timestamps that are meant for GMT+1
+// to produce timestamps that work with crons on UTC.
 function gmt_plus_one(timestamp) {
 	// if I had to choose a religion, I'd go for polytheism
 	// just so I could pray to hundreds of different gods
@@ -199,6 +201,7 @@ function gmt_plus_one(timestamp) {
 	// the absolute insanity of dealing with timezones is
 	// something I wouldn't wish upon my worst enemies.
 }
+// this wasn't even on StackOverflow. I had to write this myself.
 
 function dailySchedule() {
 	const channel = bot.channels.get(NOTIFICATION_CHANNEL);

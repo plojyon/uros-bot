@@ -256,6 +256,7 @@ function dailyDeadlines() {
 					var assignments = Object.assign(fri_assignments, fmf_assignments);
 					for (abbr in quizzes) {
 						for (dline in quizzes[abbr]) {
+							if (!quizzes[abbr][dline].timestamps) continue;
 							if (isTimestampToday(quizzes[abbr][dline].timestamps.close)) {
 								message.fields.push({
 										"name": "➡️ "+abbr,
@@ -267,6 +268,7 @@ function dailyDeadlines() {
 					}
 					for (abbr in assignments) {
 						for (dline in assignments[abbr]) {
+							if (!assignments[abbr][dline].timestamps) continue;
 							if (isTimestampToday(assignments[abbr][dline].timestamps.due)) {
 								message.fields.push({
 										"name": "➡️ "+abbr,
@@ -289,7 +291,7 @@ function dailyDeadlines() {
 			});
 		});
 	});
-	return "Fetchign deadlines now. This might take a minute ...";
+	return "Fetching deadlines now. This might take a minute ...";
 }
 function isTimestampToday(time) {
 	if (!time) return;

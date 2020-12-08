@@ -163,7 +163,7 @@ urnik = get_urnik();
 //schedule.scheduleJob(weekday_7am, ()=>{dailySchedule()}); // run every day at 7 AM
 const CronJob = require('cron');
 const dailyScheduleJob = new CronJob.CronJob (
-	'00 6 * * *', // “At 07:00 every weekday” https://crontab.guru/
+	'00 6 * * *', // “At 07:00 every day” https://crontab.guru/
 	// this is set to 6:00 because the default timezone at heroku is UTC,
 	// meanwhile we live in GMT+1
 	// P.S. fuck timezones

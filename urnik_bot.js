@@ -45,7 +45,6 @@ function get_urnik() {
 	fetch(url, { method: "GET" })
 		.then(res => res.json())
 		.then((json) => {
-			//urnik = json;
 			console.log("Got urnik. Lecture count: "+json.length);
 			urnik = [];
 			for (u in json) {
@@ -69,6 +68,7 @@ function get_urnik() {
 						time = lect[l].ura;
 						prof = lect[l].profesor;
 						urnik_unique[lectures[i]].ura.push(time+":15 ("+prof+")");
+						// example data structure:
 						// ura: [ '8:15 (Nikolaj Zimic)', '10:15 (Nikolaj Zimic)' ],
 					}
 					// sort occurrences by time
@@ -152,15 +152,7 @@ bot.login(process.env["CLIENT_SECRET"]).then(() => {
 
 urnik = get_urnik();
 
-// TODO: check for moodle posts daily (or bidaily) and notify of deadlines
-// notify deadlines even on weekends, so make a new schedule!
 
-// send a daily digest every weekday at 7 am
-//var weekday_7am = new schedule.RecurrenceRule();
-//weekday_7am.dayOfWeek = [new schedule.Range(1, 5)]; // days are enumerated 0-6, starting with Sunday
-//weekday_7am.hour = 7;
-//weekday_7am.minute = 30; // default is null! removing this will cause the job to run every minute
-//schedule.scheduleJob(weekday_7am, ()=>{dailySchedule()}); // run every day at 7 AM
 const CronJob = require('cron');
 const dailyScheduleJob = new CronJob.CronJob (
 	'00 6 * * *', // “At 07:00 every day” https://crontab.guru/
@@ -210,10 +202,13 @@ function dailySchedule() {
 
 	message = "Dobro jutro! Tu je današnji urnik:";
 	for (u in urnik[today]) {
-		type = (urnik[today][u].tip.indexOf("V") != -1)? "vaje" : "predavanja";
-		message += "\n\n`"+urnik[today][u].predmet.name+" - "+type+"` ob ";
+		isVaje = (urnik[today][u].tip.indexOf("V") != -1);
+		type = isVaje? "vaje" : "predavanja";
+		message += "\n\n";
+		message += ":"+urnik[today][u].color+"_"+(isVaje?"circle":"square")+":";
+		message += "**"+urnik[today][u].predmet.name+" - "+type+"** ob ";
 		message += urnik[today][u].ura.join(", ");
-		message += "\nLink: ";
+		message += "\n";
 		if (urnik[today][u].link.indexOf("http") == 0)
 			message += "<"+urnik[today][u].link+">"; // disable link preview
 		else
@@ -258,6 +253,7 @@ function dailyDeadlines() {
 						title: '🚨 POZOR! 🚨',
 						description: 'Danes je rok za oddajo:',
 						fields: [
+							// example data structure:
 							//{
 								//name: '➡️ LINALG',
 								//value: '1. DN Naloga',

@@ -82,8 +82,8 @@ function get_urnik() {
 				}
 				urnik[dan] = urnik_unique;
 			}
-			console.log("urnik after uniquisation:");
-			console.log(urnik);
+			//console.log("urnik after uniquisation:");
+			//console.log(urnik);
 		});
 }
 
@@ -140,9 +140,37 @@ bot.on("message", function(message) {
 });
 
 
+// role assignment by reaction logic
+/*
+$magic_string$
+:ok: secret santa
+:up: Among Us gamer
+:cool: Hacking
+:new: Movie Watcher
+:free: kmet :tractor:
+*/
+bot.on("messageReactionAdd", (reaction, user)=>{
+	let magic_string = "$Role select:\n";
+	if (reaction.message.content.indexOf(magic_string) != 0) return;
+	if (reaction.message.author.id != "356393895216545803") return; // only i can make magic string role messages
+	let msg = reaction.message.content.substring(magic_string.length);
+	let lines = msg.split("\n");
+	for (let line in lines) {
+		let emoji_name = lines[line].split(" ")[0];
+		let role_name = lines[line].split(" ");
+		role_name.shift(); // remove first element of array
+		role_name = role_name.join(" ");
+		if (emoji_name == reaction.emoji) {
+			reaction.message.guild.fetchMember(user.id).then(u => {
+				u.addRole(reaction.message.guild.roles.find("name", role_name));
+			});
+		}
+	}
+});
+
 bot.on('ready', function() {
 	console.log('Uroš ready!'); // bot initialization complete
-	//bot.user.setActivity("Analiza"); // TODO: set to whatever is currently going on
+	bot.user.setActivity("Analiza"); // TODO: set to whatever is currently going on
 });
 
 console.log("Uroš is waking up ...");

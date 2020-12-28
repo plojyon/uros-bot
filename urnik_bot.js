@@ -162,7 +162,11 @@ bot.on("messageReactionAdd", (reaction, user)=>{
 		role_name = role_name.join(" ");
 		if (emoji_name == reaction.emoji) {
 			reaction.message.guild.fetchMember(user.id).then(u => {
-				u.addRole(reaction.message.guild.roles.find("name", role_name));
+				role = reaction.message.guild.roles.find("name", role_name);
+				if (!role) {
+					reaction.message.channel.send("Warning: role "+role_name+" doesn't exist!")
+				}
+				u.addRole(role);
 			});
 		}
 	}

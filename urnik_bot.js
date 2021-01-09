@@ -192,7 +192,7 @@ const dailyScheduleJob = new CronJob.CronJob (
 	// meanwhile we live in GMT+1
 	// P.S. fuck timezones
 	()=>{
-		if (getToday() < 6) { // is weekday
+		if (getToday() < 5) { // is weekday (days 0 1 2 3 4)
 			dailySchedule();
 			dailyMentions();
 			dailyDeadlines();
@@ -207,6 +207,7 @@ const dailyScheduleJob = new CronJob.CronJob (
 );
 dailyScheduleJob.start()
 
+// get 0-based day of the week index
 function getToday() {
 	return (new Date().getDay()+6) % 7; // 0 should be Monday, not Sunday
 }

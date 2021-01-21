@@ -17,6 +17,7 @@ TESTING_CHANNEL = process.env["TESTING_CHANNEL"];
 if (!TESTING_CHANNEL) console.log("Missing TESTING_CHANNEL");
 NOTIFICATION_CHANNEL = process.env["NOTIFICATION_CHANNEL"];
 if (!NOTIFICATION_CHANNEL) console.log("Missing NOTIFICATION_CHANNEL");
+notification_backup = NOTIFICATION_CHANNEL; // this is used to restore from testing mode (when NOTIFICATION_CHANNEL is set to equal TESTING_CHANNEL)
 
 URNIK_API_URL = process.env["URNIK_API_URL"];
 if (!URNIK_API_URL) console.log("Missing URNIK_API_URL");
@@ -38,6 +39,20 @@ fs.readFile("./preferences.json", function(err, data) {
 	console.log("Users' preferences loaded");
 });
 */
+
+function testing(enable) {
+	const testing = bot.channels.get(TESTING_CHANNEL);
+	if (enable) {
+		NOTIFICATION_CHANNEL = notification_backup;
+		testing.send("Testing mode disabled.");
+		bot.user.setActivity("Analiza");
+	}
+	else {
+		NOTIFICATION_CHANNEL = TESTING_CHANNEL;
+		testing.send("Testing mode enabled.");
+		bot.user.setActivity("MAINTENANCE MODE");
+	}
+}
 
 urnik = {};
 function get_urnik() {
@@ -233,8 +248,9 @@ function dailySchedule() {
 	var now = new Date();
 	var today = getToday();
 
-	if (urnik[today].length == 0) return;
-	
+	if (!(today in urnik)) return; // nothing today
+	if (urnik[today].length == 0) return; // today exists, but is empty
+
 	message = "Dobro jutro! Tu je današnji urnik:";
 	for (u in urnik[today]) {
 		isVaje = (urnik[today][u].tip.indexOf("V") != -1);

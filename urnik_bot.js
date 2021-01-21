@@ -233,6 +233,8 @@ function dailySchedule() {
 	var now = new Date();
 	var today = getToday();
 
+	if (urnik[today].length == 0) return;
+	
 	message = "Dobro jutro! Tu je današnji urnik:";
 	for (u in urnik[today]) {
 		isVaje = (urnik[today][u].tip.indexOf("V") != -1);

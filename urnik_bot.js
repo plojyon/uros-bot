@@ -43,14 +43,14 @@ fs.readFile("./preferences.json", function(err, data) {
 function testing(enable) {
 	const testing = bot.channels.get(TESTING_CHANNEL);
 	if (enable) {
-		NOTIFICATION_CHANNEL = notification_backup;
-		testing.send("Testing mode disabled.");
-		bot.user.setActivity("Analiza");
-	}
-	else {
 		NOTIFICATION_CHANNEL = TESTING_CHANNEL;
 		testing.send("Testing mode enabled.");
 		bot.user.setActivity("MAINTENANCE MODE");
+	}
+	else {
+		NOTIFICATION_CHANNEL = notification_backup;
+		testing.send("Testing mode disabled.");
+		bot.user.setActivity("Analiza");
 	}
 }
 

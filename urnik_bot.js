@@ -216,7 +216,7 @@ function getToday() {
 // returns timestamp, translated to (from?) GMT+1
 // (??) basically, use this on timestamps that are meant for GMT+1
 // to produce timestamps that work with crons on UTC.
-function gmt_plus_one(timestamp) {
+function gmt_plus_one(timestamp) { // or just don't use this at all... it works right now, so leave it
 	// if I had to choose a religion, I'd go for polytheism
 	// just so I could pray to hundreds of different gods
 	// that I never ever have to deal with timezones again.
@@ -242,7 +242,9 @@ function dailySchedule() {
 		message += "**"+urnik[today][u].predmet.name+" - "+type+"** ob ";
 		message += urnik[today][u].ura.join(", ");
 		message += "\n";
-		if (urnik[today][u].link.indexOf("http") == 0)
+		if (!urnik[today][u].link)
+			message += "Ni linka :(";
+		else if (urnik[today][u].link.indexOf("http") == 0)
 			message += "<"+urnik[today][u].link+">"; // disable link preview
 		else
 			message += urnik[today][u].link;

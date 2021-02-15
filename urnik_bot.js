@@ -257,7 +257,7 @@ function dailySchedule() {
 		isVaje = (urnik[today][u].tip.indexOf("V") != -1);
 		type = isVaje? "vaje" : "predavanja";
 		message += "\n\n";
-		message += ":"+urnik[today][u].color+"_"+(isVaje?"circle":"square")+": ";
+		message += ":"+(urnik[today][u].predmet.color || "white")+"_"+(isVaje?"circle":"square")+": ";
 		message += "**"+urnik[today][u].predmet.name+" - "+type+"** ob ";
 		message += urnik[today][u].ura.join(", ");
 		message += "\n";

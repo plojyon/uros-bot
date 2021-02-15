@@ -164,6 +164,7 @@ $magic_string$
 :new: Movie Watcher
 :free: kmet :tractor:
 */
+/*
 bot.on("messageReactionAdd", (reaction, user)=>{
 	let magic_string = "$Role select:\n";
 	if (reaction.message.content.indexOf(magic_string) != 0) return;
@@ -185,7 +186,7 @@ bot.on("messageReactionAdd", (reaction, user)=>{
 			});
 		}
 	}
-});
+});*/
 
 bot.on('ready', function() {
 	console.log('Uroš ready!'); // bot initialization complete

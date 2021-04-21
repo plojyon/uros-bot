@@ -159,9 +159,9 @@ urnik = get_urnik();
 
 const CronJob = require('cron');
 const dailyScheduleJob = new CronJob.CronJob (
-	'00 6 * * *', // “At 07:00 every day” https://crontab.guru/
-	// this is set to 6:00 because the default timezone at heroku is UTC,
-	// meanwhile we live in GMT+1
+	'00 5 * * *', // “At 07:00 every day” https://crontab.guru/
+	// this is set to 5:00 because the default timezone at okeanos is UTC,
+	// meanwhile we live in GMT+1/+2
 	// P.S. fuck timezones
 	()=>{
 		if (getToday() < 5) { // is weekday (days 0 1 2 3 4)

@@ -13,6 +13,5 @@ env variables:
 * URNIK_API_URL=
 * MOODLE_API_URL=
 * AVATAR_URL=
-Urls should not have trailing slashes.
 
-Hosted by Heroku.
+Urls should not have trailing slashes.

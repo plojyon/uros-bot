@@ -26,19 +26,9 @@ if (!MOODLE_API_URL) console.log("Missing MOODLE_API_URL");
 AVATAR_URL = process.env["AVATAR_URL"];
 if (!AVATAR_URL) console.log("Missing AVATAR_URL");
 
-// currently, preferences cannot load because Heroku does not support persistent storage
-// TODO: find a remote database solution instead
-/*
-// load preferences
-fs.readFile("./preferences.json", function(err, data) {
-	if (err) {
-		console.log(err);
-		return;
-	};
-	preferences = JSON.parse(data);
-	console.log("Users' preferences loaded");
-});
-*/
+// if running multiple instances, use this ID to differentiate between them
+CLIENT_ID = process.env["CLIENT_ID"];
+if (!CLIENT_ID) console.log("Missing CLIENT_ID");
 
 function testing(enable) {
 	const testing = bot.channels.get(TESTING_CHANNEL);
@@ -149,44 +139,10 @@ bot.on("message", function(message) {
 			.catch((e)=>{console.log(e)})
 		message.channel.send("I heard my name!")
 			.catch((e)=>{console.log(e)})
-		//message.author.send(help);
+		message.author.send("yuo are sexy");
 		return;
 	}
 });
-
-
-// role assignment by reaction logic
-/*
-$magic_string$
-:ok: secret santa
-:up: Among Us gamer
-:cool: Hacking
-:new: Movie Watcher
-:free: kmet :tractor:
-*/
-/*
-bot.on("messageReactionAdd", (reaction, user)=>{
-	let magic_string = "$Role select:\n";
-	if (reaction.message.content.indexOf(magic_string) != 0) return;
-	if (reaction.message.author.id != "356393895216545803") return; // only i can make magic string role messages
-	let msg = reaction.message.content.substring(magic_string.length);
-	let lines = msg.split("\n");
-	for (let line in lines) {
-		let emoji_name = lines[line].split(" ")[0];
-		let role_name = lines[line].split(" ");
-		role_name.shift(); // remove first element of array
-		role_name = role_name.join(" ");
-		if (emoji_name == reaction.emoji) {
-			reaction.message.guild.fetchMember(user.id).then(u => {
-				role = reaction.message.guild.roles.find("name", role_name);
-				if (!role) {
-					reaction.message.channel.send("Warning: role "+role_name+" doesn't exist!")
-				}
-				u.addRole(role);
-			});
-		}
-	}
-});*/
 
 bot.on('ready', function() {
 	console.log('Uroš ready!'); // bot initialization complete

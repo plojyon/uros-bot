@@ -13,5 +13,6 @@ env variables:
 * URNIK_API_URL=
 * MOODLE_API_URL=
 * AVATAR_URL=
+* CLIENT_ID=
 
 Urls should not have trailing slashes.

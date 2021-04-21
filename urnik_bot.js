@@ -239,6 +239,7 @@ function gmt_plus_one(timestamp) { // or just don't use this at all... it works 
 	return timestamp
 		- 60000*(new Date().getTimezoneOffset()) // translate to UTC
 		+ 60*1000*60; // add one hour
+		+ 60*1000*60; // add one more hour because alskjdhaflkjashflkajsdn
 	// the absolute insanity of dealing with timezones is
 	// something I wouldn't wish upon my worst enemies.
 }

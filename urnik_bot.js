@@ -5,13 +5,14 @@
 // Invite link:
 // https://discord.com/api/oauth2/authorize?client_id=770964922720321546&permissions=8&scope=bot
 
-
 const Discord = require('discord.js');
 const bot = new Discord.Client();
-var fs = require('fs'); // FILE SYSTEM
+const client = bot; // alias
+const fs = require('fs'); // FILE SYSTEM
 require('dotenv').config({path: __dirname + '/.env'}); // env variables (client secret)
 const fetch = require('node-fetch'); // to fetch timetable and moodle events
-const schedule = require('node-schedule'); // send messages every day
+const CronJob = require('cron'); // send messages every day
+const moment = require('moment-timezone') // praise devs who work with time
 
 TESTING_CHANNEL = process.env["TESTING_CHANNEL"];
 if (!TESTING_CHANNEL) console.log("Missing TESTING_CHANNEL");
@@ -94,27 +95,16 @@ function get_urnik() {
 
 
 function warn(txt) {
-	const channel = bot.channels.get(WARNING_CHANNEL);
+	const channel = bot.channels.get(TESTING_CHANNEL);
 	channel.send(txt)
 		.catch((e)=>{console.log(e)})
 }
 
-// TODO:
-help = "help text goes here";
-
-
 bot.on("message", function(message) {
-	var msg = message.content.toLowerCase(); // case insensitive
-
-	user = message.author.id;
-	channel = message.channel.id;
-
-	if (message.author.bot) return;
-
 	// DEBUG:
 	// if the message is from me and starts with %, eval() the message
 	// and send the output back to the same channel
-	if (message.author.id === "356393895216545803" && msg.indexOf("%") === 0) {
+	if (message.author.id === "356393895216545803" && message.content.indexOf("%") === 0) {
 		try {
 			// if the message is in ```code blocks```, supress the return value
 			if (message.content.indexOf("```") != 1) {
@@ -134,12 +124,17 @@ bot.on("message", function(message) {
 		}
 	}
 
+	// @Uros ping
 	if (message.guild !== null && message.isMentioned(bot.user)) {
 		message.react("🥳")
 			.catch((e)=>{console.log(e)})
 		message.channel.send("I heard my name!")
 			.catch((e)=>{console.log(e)})
-		message.author.send("yuo are sexy");
+
+		if (Math.floor(Math.random() * 100) == 0)
+			// super rare event!
+			message.author.send("yuo are sexy");
+
 		return;
 	}
 });
@@ -157,12 +152,8 @@ bot.login(process.env["CLIENT_SECRET"]).then(() => {
 urnik = get_urnik();
 
 
-const CronJob = require('cron');
 const dailyScheduleJob = new CronJob.CronJob (
-	'00 5 * * *', // “At 07:00 every day” https://crontab.guru/
-	// this is set to 5:00 because the default timezone at okeanos is UTC,
-	// meanwhile we live in GMT+1/+2
-	// P.S. fuck timezones
+	'00 7 * * *', // “At 07:00 every day” https://crontab.guru/
 	()=>{
 		if (getToday() < 5) { // is weekday (days 0 1 2 3 4)
 			dailySchedule();
@@ -174,32 +165,19 @@ const dailyScheduleJob = new CronJob.CronJob (
 			dailyDeadlines();
 		}
 	},
-	null, //oncomplete
-	false //start flag
+	null, // oncomplete
+	true, // start flag (start the job immediately)
+	"Europe/Ljubljana" // thank you momentjs I owe you my life
 );
-dailyScheduleJob.start()
 
 // get 0-based day of the week index
 function getToday() {
-	return (new Date().getDay()+6) % 7; // 0 should be Monday, not Sunday
-}
-
-
-// returns timestamp, translated to GMT+1
-// (??) basically, use this on timestamps that are meant for GMT+1
-// to produce timestamps that work with crons on UTC.
-function gmt_plus_one(timestamp) {
-	return timestamp
-		- 60000*(new Date().getTimezoneOffset()) // translate to UTC
-		+ 60*1000*60  // add one hour
-		+ 60*1000*60; // add one more hour (disable this during winter time)
-	// apparently we live in GMT+1 during winter and GMT+2 during summer
+	return (moment.day()+6) % 7; // 0 should be Monday, not Sunday
 }
 
 function dailySchedule() {
 	const channel = bot.channels.get(NOTIFICATION_CHANNEL);
-	var now = new Date();
-	var today = getToday();
+	let today = getToday();
 
 	if (!(today in urnik)) return; // nothing today
 	if (urnik[today].length == 0) return; // today exists, but is empty
@@ -261,7 +239,7 @@ function dailyDeadlines() {
 						fields: [
 							// example data structure:
 							//{
-								//name: '➡️ LINALG',
+								//name: 'LINALG',
 								//value: '1. DN Naloga',
 							//},
 						],
@@ -313,16 +291,10 @@ function dailyDeadlines() {
 	});
 	return "Fetching deadlines now. This might take a minute ...";
 }
+
 function isTimestampToday(time) {
-	if (!time) return;
-	time *= 1000; // js deals in milliseconds
-	time = gmt_plus_one(time);
-	var today = new Date().setHours(0, 0, 0, 0);
-	var ts_day = new Date(time).setHours(0, 0, 0, 0);
-	if (today === ts_day){
-		return true;
-	}
-	return false;
+	if (!time) return false; // might happen when checking quizzes without deadlines
+	return moment(time*1000).tz("Europe/Ljubljana").isSame(moment(), 'day');
 }
 
 function getUniqueLectures(urnik) {
@@ -334,9 +306,3 @@ function getUniqueLectures(urnik) {
 	}
 	return lectures;
 }
-
-/*
-function random(min, max) {
-	return Math.floor(Math.random() * (max-min)) + min;
-}
-*/

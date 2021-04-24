@@ -12,5 +12,6 @@ env variables:
 * MOODLE_API_URL=
 * AVATAR_URL=
 * CLIENT_ID=
+* ADMIN_ID=
 
 Urls should not have trailing slashes.

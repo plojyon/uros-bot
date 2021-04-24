@@ -31,6 +31,10 @@ if (!AVATAR_URL) console.log("Missing AVATAR_URL");
 CLIENT_ID = process.env["CLIENT_ID"];
 if (!CLIENT_ID) console.log("Missing CLIENT_ID");
 
+// the userid that may use direct eval()
+ADMIN_ID = process.env["ADMIN_ID"];
+if (!ADMIN_ID) console.log("Missing ADMIN_ID");
+
 function testing(enable) {
 	const testing = bot.channels.get(TESTING_CHANNEL);
 	if (enable) {
@@ -104,7 +108,7 @@ bot.on("message", function(message) {
 	// DEBUG:
 	// if the message is from me and starts with %, eval() the message
 	// and send the output back to the same channel
-	if (message.author.id === "356393895216545803" && message.content.indexOf("%") === 0) {
+	if (message.author.id === ADMIN_ID && message.content.indexOf("%") === 0) {
 		try {
 			// if the message is in ```code blocks```, supress the return value
 			if (message.content.indexOf("```") != 1) {

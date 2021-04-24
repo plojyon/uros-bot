@@ -191,7 +191,7 @@ function getToday() {
 function gmt_plus_one(timestamp) {
 	return timestamp
 		- 60000*(new Date().getTimezoneOffset()) // translate to UTC
-		+ 60*1000*60; // add one hour
+		+ 60*1000*60  // add one hour
 		+ 60*1000*60; // add one more hour (disable this during winter time)
 	// apparently we live in GMT+1 during winter and GMT+2 during summer
 }

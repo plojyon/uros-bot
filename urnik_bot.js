@@ -176,7 +176,7 @@ const dailyScheduleJob = new CronJob.CronJob (
 
 // get 0-based day of the week index
 function getToday() {
-	return (moment.day()+6) % 7; // 0 should be Monday, not Sunday
+	return (moment().day()+6) % 7; // 0 should be Monday, not Sunday
 }
 
 function dailySchedule() {
